@@ -17,5 +17,9 @@
     <string name="pref_sort_vote_average_desc" translatable="false">vote_average.desc</string>
     <string name="pref_sort_favourite_desc" translatable="false">favourite</string>
 
+    <string name="trailers_header">Trailers</string>
+    <string name="reviews_header">Reviews</string>
+
+
 
 </resources>

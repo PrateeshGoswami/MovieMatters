@@ -24,6 +24,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.PosterViewHo
     private LayoutInflater inflater;
     List<Result> data = Collections.emptyList();
     private Context mContext;
+    private Result mResult;
+
 
     public MovieAdapter(Context context,List<Result> data){
         inflater=LayoutInflater.from(context);
@@ -34,6 +36,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.PosterViewHo
     public void updateData(List<Result> newData){
         data = newData;
         notifyDataSetChanged();
+    }
+    public Result getItem(int position){
+        return data.get(position);
     }
 
     @Override

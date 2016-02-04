@@ -9,7 +9,7 @@ import retrofit2.http.GET;
  * @date 2/2/2016
  */
 public interface GetMovieApi {
-    @GET("/3/discover/movie?sort_by=popularity.desc&api_key=4d8f552f39388ab79c89e70dd5eafd2f")
+    @GET("/3/discover/movie?sort_by=popularity.desc&api_key=your api key here")
     Call<Movie> getMovie(
 //                @Path("movieId") String movieId,
 //                @Query("q") String apiKey
