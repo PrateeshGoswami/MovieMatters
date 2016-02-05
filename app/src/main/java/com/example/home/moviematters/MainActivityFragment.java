@@ -1,9 +1,11 @@
 package com.example.home.moviematters;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -29,9 +31,13 @@ import retrofit2.Retrofit;
  */
 public class MainActivityFragment extends Fragment {
     public List<Result> movieslist;
+    public List<Result> favMoviesList;
+
     @Bind(R.id.moviegrid)
     public RecyclerView recyclerView;
     private MovieAdapter mAdapter;
+    private String sortKey;
+    Constants constants = new Constants();
 
 
     public MainActivityFragment() {
@@ -59,54 +65,36 @@ public class MainActivityFragment extends Fragment {
         }));
 
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://api.themoviedb.org")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        final GetMovieApi movieApi = retrofit.create(GetMovieApi.class);
-        Call<Movie> call = movieApi.getMovie();
-        call.enqueue(new Callback<Movie>() {
-            @Override
-            public void onResponse(Response<Movie> response) {
-                try {
-
-
-                    Movie movie = response.body();
-                    movieslist = movie.getResults();
-                    for (int i = 0; i < movieslist.size(); i++) {
-                        Result result = movieslist.get(i);
-
-                        String poster_path = Uri.parse("http://image.tmdb.org/t/p/w185").buildUpon()
-                                .appendEncodedPath(result.getPosterPath())
-                                .build().toString();
-                        result.setPosterPath(poster_path);
-                        movieslist.set(i, result);
-                        mAdapter.updateData(movieslist);
-                        }
-
-
-                } catch (NullPointerException e) {
-                    Toast toast = null;
-                    if (response.code() == 401) {
-                        toast = Toast.makeText(getActivity(), "Unauthenticated", Toast.LENGTH_SHORT);
-                    } else if (response.code() >= 400) {
-                        toast = Toast.makeText(getActivity(), "Client Error " + response.code()
-                                + " " + response.message(), Toast.LENGTH_SHORT);
-                    }
-                    toast.show();
-
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.e("getQuestions threw: ", t.getMessage());
-            }
-        });
-
-
         return view;
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        sortKey = sharedPref.getString(getString(R.string.pref_movie_sorting_key),
+                getString(R.string.pref_movie_sorting_default));
+        switch (sortKey) {
+            case "popularity.desc":
+                FetchMovieTask(sortKey);
+                break;
+            case "vote_average.desc":
+                FetchMovieTask(sortKey);
+                break;
+            case "favourite":
+
+                FetchFavouriteTask(281957);
+                break;
+
+//                SharedPreferences sharedPreferences = getActivity().getSharedPreferences("Data", 0);
+//                int size = sharedPreferences.getInt("Status_Size", 0);
+//                for (int i = 0; i < size; i++) {
+//                    String string = sharedPreferences.getString("Status_" + i, null);
+
+        }
+
+    }
+
 
     class RecyclerTouchListener implements RecyclerView.OnItemTouchListener {
         private GestureDetector gestureDetector;
@@ -114,7 +102,7 @@ public class MainActivityFragment extends Fragment {
 
         public RecyclerTouchListener(Context context, RecyclerView recyclerView, ClickListener clickListener) {
             this.clickListener = clickListener;
-            gestureDetector = new GestureDetector(context,new  GestureDetector.SimpleOnGestureListener(){
+            gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
                 @Override
                 public boolean onSingleTapUp(MotionEvent e) {
 
@@ -126,9 +114,9 @@ public class MainActivityFragment extends Fragment {
         @Override
         public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
 
-            View child = rv.findChildViewUnder(e.getX(),e.getY());
-            if (child!=null && clickListener!=null && gestureDetector.onTouchEvent(e)){
-                clickListener.onClick(child,rv.getChildPosition(child));
+            View child = rv.findChildViewUnder(e.getX(), e.getY());
+            if (child != null && clickListener != null && gestureDetector.onTouchEvent(e)) {
+                clickListener.onClick(child, rv.getChildPosition(child));
 
             }
 
@@ -149,8 +137,95 @@ public class MainActivityFragment extends Fragment {
     public static interface ClickListener {
         public void onClick(View view, int position);
     }
+
     public interface CallBack {
         public void onItemSelected(int movieID);
     }
 
+    public void FetchMovieTask(String sortingOrder) {
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(constants.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        final GetMovieApi movieApi = retrofit.create(GetMovieApi.class);
+        Call<Movie> call = movieApi.getMovie(sortingOrder, constants.API_KEY);
+        call.enqueue(new Callback<Movie>() {
+            @Override
+            public void onResponse(Response<Movie> response) {
+                try {
+                    Movie movie = response.body();
+                    movieslist = movie.getResults();
+                    for (int i = 0; i < movieslist.size(); i++) {
+                        Result result = movieslist.get(i);
+                        String poster_path = Uri.parse("http://image.tmdb.org/t/p/w185").buildUpon()
+                                .appendEncodedPath(result.getPosterPath())
+                                .build().toString();
+                        result.setPosterPath(poster_path);
+                        movieslist.set(i, result);
+                        mAdapter.updateData(movieslist);
+
+                    }
+                } catch (NullPointerException e) {
+                    Toast toast = null;
+                    if (response.code() == 401) {
+                        toast = Toast.makeText(getActivity(), "Unauthenticated", Toast.LENGTH_SHORT);
+                    } else if (response.code() >= 400) {
+                        toast = Toast.makeText(getActivity(), "Client Error " + response.code()
+                                + " " + response.message(), Toast.LENGTH_SHORT);
+                    }
+                    toast.show();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e("getQuestions threw: ", t.getMessage());
+            }
+        });
+    }
+
+
+    public void FetchFavouriteTask(int movieId) {
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(constants.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        final GetMovieApi movieApi = retrofit.create(GetMovieApi.class);
+        Call<Result> call = movieApi.getFavouriteMovie(movieId,constants.API_KEY);
+        call.enqueue(new Callback<Result>() {
+            @Override
+            public void onResponse(Response<Result> response) {
+                try {
+                    Result movie = response.body();
+                    String poster_path = Uri.parse("http://image.tmdb.org/t/p/w185").buildUpon()
+                            .appendEncodedPath(movie.getPosterPath())
+                            .build().toString();
+                    movie.setPosterPath(poster_path);
+                    String str = movie.getOriginalTitle();
+                    Log.d("test","Original titile & Poster Path :"+str +" " + poster_path );
+
+
+                }catch (NullPointerException e) {
+                    Toast toast = null;
+                    if (response.code() == 401) {
+                        toast = Toast.makeText(getActivity(), "Unauthenticated", Toast.LENGTH_SHORT);
+                    } else if (response.code() >= 400) {
+                        toast = Toast.makeText(getActivity(), "Client Error " + response.code()
+                                + " " + response.message(), Toast.LENGTH_SHORT);
+                    }
+                    toast.show();
+                }
+
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Log.e("getQuestions threw: ", t.getMessage());
+            }
+        });
+
+
+    }
 }
