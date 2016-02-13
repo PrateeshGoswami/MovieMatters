@@ -203,7 +203,10 @@ public class MainActivityFragment extends Fragment {
                             .appendEncodedPath(movie.getPosterPath())
                             .build().toString();
                     movie.setPosterPath(poster_path);
+//                    favMoviesList.add(movie);
+//                    mAdapter.swap(favMoviesList);
                     String str = movie.getOriginalTitle();
+
                     Log.d("test","Original titile & Poster Path :"+str +" " + poster_path );
 
 

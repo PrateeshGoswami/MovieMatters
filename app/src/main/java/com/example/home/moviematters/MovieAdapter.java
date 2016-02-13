@@ -37,14 +37,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.PosterViewHo
         data = newData;
         notifyDataSetChanged();
     }
-    public void clearList(){
-        int size = this.data.size();
-        if(size > 0){
-            for (int i = 0;i<size;i++) {
-                data.remove(i);
-            }
-            this.notifyItemRangeRemoved(0,size);
-        }
+    public void swap(List<Result> newdata){
+        data.clear();
+        data.addAll(newdata);
+        notifyDataSetChanged();
+
     }
     public Result getItem(int position){
         return data.get(position);

@@ -7,7 +7,7 @@ package com.example.home.moviematters;
  */
 public class Constants {
 
-   public final String API_KEY = "your api key";
+   public final String API_KEY = "your key";
     public final String BASE_URL = "http://api.themoviedb.org";
 
 
